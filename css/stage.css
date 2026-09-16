@@ -1,0 +1,113 @@
+/* ============================================================
+   stage.css — ভিডিও স্টেজের ভিজ্যুয়াল (1920×1080 ডিজাইন স্পেস)
+   ============================================================ */
+
+.cx-stage {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: var(--bg-base, #060810);
+  color: var(--c-text, #fff);
+  font-family: var(--f-body, sans-serif);
+  transform-origin: top left;
+  user-select: none;
+  -webkit-user-select: none;
+  isolation: isolate;
+}
+
+.cx-stage > [data-layer] { position: absolute; inset: 0; }
+
+/* ব্যাকগ্রাউন্ড বেস */
+.cx-bg-layer {
+  background:
+    radial-gradient(120% 90% at 50% 0%, var(--bg-top) 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-base) 45%, var(--bg-bottom) 100%);
+}
+
+/* এফেক্ট ক্যানভাস (গ্লোবাল, সিন-ক্যানভাসের নিচে) */
+.cx-fx { width: 100%; height: 100%; pointer-events: none; opacity: .9; }
+
+/* ব্লুম */
+.cx-bloom {
+  background: radial-gradient(58% 46% at 50% 46%, rgba(255,255,255,.10) 0%, transparent 72%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* সিন লেয়ার */
+.cx-scenes { pointer-events: none; }
+.cx-scene { position: absolute; inset: 0; }
+.cx-scene-bg { position: absolute; inset: -8%; }
+.cx-scene-fx { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cx-scene-elems { position: absolute; inset: 0; }
+
+/* ভিনিয়েট */
+.cx-vignette {
+  pointer-events: none;
+  background:
+    radial-gradient(78% 72% at 50% 50%, transparent 42%, rgba(0,0,0,.55) 88%, rgba(0,0,0,.86) 100%);
+}
+
+/* ফিল্ম গ্রেইন */
+.cx-grain {
+  pointer-events: none;
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  mix-blend-mode: overlay;
+  opacity: .05;
+}
+
+/* স্ক্যানলাইন (নোয়ার থিমে) */
+.cx-scanlines {
+  pointer-events: none;
+  opacity: 0;
+  background: repeating-linear-gradient(180deg, rgba(0,0,0,.30) 0 1px, transparent 1px 4px);
+  mix-blend-mode: multiply;
+}
+
+/* সিনেমাটিক বার */
+.cx-bars { pointer-events: none; display: none; }
+.cx-bars::before, .cx-bars::after {
+  content: ''; position: absolute; left: 0; right: 0; height: 0px; background: #000;
+}
+
+/* গাইড (শুধু এডিটরে) */
+.cx-guides { pointer-events: none; z-index: 60; }
+.cx-guide { position: absolute; border: 2px dashed rgba(255,255,255,.22); }
+.cx-guide.safe90 { inset: 5%; }
+.cx-guide.safe80 { inset: 10%; border-color: rgba(255,255,255,.13); }
+.cx-guide-center {
+  position: absolute; left: 50%; top: 50%; width: 34px; height: 34px;
+  transform: translate(-50%,-50%);
+  border-left: 2px solid rgba(255,255,255,.28);
+  border-top: 2px solid rgba(255,255,255,.28);
+}
+.cx-guide-third { position: absolute; background: rgba(255,255,255,.10); }
+.cx-guide-third.h1 { left: 33.333%; top: 0; bottom: 0; width: 1px; }
+.cx-guide-third.h2 { left: 66.666%; top: 0; bottom: 0; width: 1px; }
+.cx-guide-third.v1 { top: 33.333%; left: 0; right: 0; height: 1px; }
+.cx-guide-third.v2 { top: 66.666%; left: 0; right: 0; height: 1px; }
+
+/* এলিমেন্ট বেস */
+.cx-elem { transform-origin: center center; backface-visibility: hidden; }
+.cx-inner {
+  width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
+  white-space: pre-wrap;
+}
+.cx-elem img { -webkit-user-drag: none; }
+
+/* কোট কার্ডে লাইট রিফ্লেকশন */
+.cx-quote::after {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(125deg, rgba(255,255,255,.10) 0%, transparent 38%);
+  pointer-events: none;
+}
+
+/* রেকর্ড মোডে স্টেজ পুরো স্ক্রিন জুড়ে */
+.rec-stage-wrap .cx-stage { box-shadow: none !important; }

@@ -1,0 +1,37 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node সেটআপ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: ইউনিট + ইন্টিগ্রেশন টেস্ট
+        run: |
+          echo "── smoke.mjs (কোর লজিক) ──"
+          node tests/smoke.mjs
+          echo ""
+          echo "── smoke2.mjs (UI মডিউল) ──"
+          node tests/smoke2.mjs
+          echo ""
+          echo "── e2e.mjs (এন্ড-টু-এন্ড ফ্লো) ──"
+          node tests/e2e.mjs
+
+      - name: সিনট্যাক্স চেক
+        run: |
+          for f in js/*.js; do
+            node --input-type=module --eval "import('./$f').catch(e=>{if(!/document|window|Audio|localStorage|indexedDB/.test(e.message)){console.error('FAIL $f:',e.message);process.exit(1)}})" || exit 1
+          done
+          echo "✓ সব মডিউল পড়া গেছে"

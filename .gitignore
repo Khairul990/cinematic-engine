@@ -1,0 +1,31 @@
+# সিক্রেট — কখনো কমিট হবে না
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+token*
+
+# সিস্টেম / এডিটর
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# ডিপেন্ডেন্সি / বিল্ড আর্টিফ্যাক্ট
+node_modules/
+dist/
+build/
+.cache/
+__pycache__/
+*.pyc
+npm-debug.log*
+
+# লোকাল অডিও/ভিডিও টেস্ট ফাইল
+*.mp3
+*.wav
+*.m4a
+*.mp4
+*.webm

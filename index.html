@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cinematic Engine — অটো ভিডিও টাইমলাইন স্টুডিও</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700;800&family=Baloo+Da+2:wght@500;700;800&family=Inter:wght@400;600;700;800&family=Playfair+Display:wght@600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/stage.css" />
+<link rel="stylesheet" href="css/app.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d1224'/%3E%3Cpath d='M8 21V11l7 5 7-5v10' stroke='%23f5c451' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<!-- ============ হেডার ============ -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 32 32" width="26" height="26"><path d="M5 22V10l8 6 8-6v12" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="12" r="2.6" fill="currentColor"/></svg>
+    </div>
+    <div class="brand-text">
+      <b>Cinematic Engine</b>
+      <span>অটো ভিডিও টাইমলাইন স্টুডিও</span>
+    </div>
+  </div>
+
+  <div class="topbar-center">
+    <input id="projectTitle" class="title-input" type="text" placeholder="প্রজেক্টের নাম" />
+    <select id="aspectSelect" class="mini-select" title="ভিডিওর আকার">
+      <option value="16:9">16:9 · 1920×1080</option>
+      <option value="9:16">9:16 · Shorts 1080×1920</option>
+      <option value="1:1">1:1 · Square 1080×1080</option>
+      <option value="4:5">4:5 · Feed 1080×1350</option>
+    </select>
+    <div class="theme-swatches" id="themeSwatches"></div>
+  </div>
+
+  <div class="topbar-actions">
+    <button class="btn ghost" id="btnUndo" title="পূর্বাবস্থা (Ctrl+Z)">↶</button>
+    <button class="btn ghost" id="btnRedo" title="পুনরায় (Ctrl+Y)">↷</button>
+    <div class="sep"></div>
+    <button class="btn ghost" id="btnDemo">ডেমো</button>
+    <button class="btn ghost" id="btnImportJson">আমদানি</button>
+    <button class="btn ghost" id="btnExportJson">সংরক্ষণ</button>
+    <button class="btn ghost" id="btnNew">নতুন</button>
+    <div class="sep"></div>
+    <button class="btn ghost icon" id="btnHelp" title="সাহায্য ও শর্টকাট (?)">?</button>
+    <button class="btn primary" id="btnRecord">
+      <span class="rec-dot"></span> রেকর্ড মোড <kbd>F11</kbd>
+    </button>
+  </div>
+</header>
+
+<!-- ============ মূল লেআউট ============ -->
+<div class="workspace">
+
+  <!-- বাম প্যানেল -->
+  <aside class="panel panel-left" id="panelLeft">
+    <nav class="tabs" id="leftTabs">
+      <button class="tab active" data-tab="audio">অডিও</button>
+      <button class="tab" data-tab="script">স্ক্রিপ্ট</button>
+      <button class="tab" data-tab="generate">জেনারেট</button>
+      <button class="tab" data-tab="scenes">সিন</button>
+      <button class="tab" data-tab="assets">ছবি</button>
+    </nav>
+
+    <!-- অডিও ট্যাব -->
+    <section class="tabpane active" data-pane="audio">
+      <div class="drop" id="audioDrop">
+        <div class="drop-icon">🎙️</div>
+        <b>তোমার ভয়েসওভার টানো</b>
+        <span>অথবা ক্লিক করে বেছে নাও · MP3 / WAV / M4A / OGG</span>
+        <input type="file" id="audioInput" accept="audio/*" hidden />
+      </div>
+
+      <div class="audio-info card" id="audioInfo" hidden>
+        <div class="row"><span class="lbl">ফাইল</span><span class="val" id="aiName">—</span></div>
+        <div class="row"><span class="lbl">দৈর্ঘ্য</span><span class="val" id="aiDur">—</span></div>
+        <div class="row"><span class="lbl">সিগমেন্ট</span><span class="val" id="aiSegs">—</span></div>
+        <div class="wavebox"><canvas id="waveCanvas" height="72"></canvas></div>
+        <div class="btnrow">
+          <button class="btn small" id="btnTestPlay">▶ শোনো</button>
+          <button class="btn small ghost" id="btnRemoveAudio">সরাও</button>
+        </div>
+      </div>
+
+      <div class="progress-box" id="analyzeProgress" hidden>
+        <div class="bar"><i></i></div>
+        <span id="analyzeMsg">…</span>
+      </div>
+
+      <div class="group">
+        <h4>ব্যাকগ্রাউন্ড মিউজিক <label class="switch"><input type="checkbox" id="bgmToggle"><i></i></label></h4>
+        <div class="drop small" id="bgmDrop">
+          <span>মিউজিক ফাইল বাছো</span>
+          <input type="file" id="bgmInput" accept="audio/*" hidden />
+        </div>
+        <label class="field"><span>মিউজিক ভলিউম</span><input type="range" id="bgmVolume" min="0" max="0.5" step="0.01" value="0.12"><b id="bgmVolumeVal">12%</b></label>
+      </div>
+
+      <div class="group">
+        <h4>ভয়েস ভলিউম</h4>
+        <label class="field"><span>লেভেল</span><input type="range" id="voiceVolume" min="0" max="1" step="0.01" value="1"><b id="voiceVolumeVal">100%</b></label>
+      </div>
+
+      <div class="note">
+        <b>টিপস:</b> অডিও একবার আপলোড করলেই ব্রাউজারেই বিশ্লেষণ হয় — কোনো সার্ভারে যায় না, সম্পূর্ণ প্রাইভেট।
+      </div>
+    </section>
+
+    <!-- স্ক্রিপ্ট ট্যাব -->
+    <section class="tabpane" data-pane="script">
+      <div class="group">
+        <h4>তোমার স্ক্রিপ্ট / টেক্সট</h4>
+        <p class="hint">তুমি অডিওতে যা বলেছ ঠিক সেই লেখা এখানে পেস্ট করো। প্রতিটি লাইন/বাক্য আলাদা করে লিখলে সবচেয়ে নিখুঁত সিঙ্ক হবে। ফাঁকা রাখলে অডিওর সাইলেন্স ধরে সিন ভাগ হবে।</p>
+        <textarea id="scriptInput" class="textarea" rows="14" placeholder="একটা সময় ছিল যখন আমি ভাবতাম পারব না…&#10;&#10;তারপর সেই দিনটা এল…&#10;&#10;আর সব বদলে গেল।"></textarea>
+        <div class="btnrow">
+          <button class="btn small" id="btnScriptLines">লাইন গুনে দেখো</button>
+          <button class="btn small ghost" id="btnScriptClear">মুছো</button>
+        </div>
+        <div class="stat" id="scriptStat">০টি লাইন</div>
+      </div>
+
+      <div class="group">
+        <h4>চ্যানেলের নাম (ওয়াটারমার্ক)</h4>
+        <input type="text" id="channelName" class="input" placeholder="তোমার চ্যানেল" />
+        <label class="check"><input type="checkbox" id="watermarkToggle" checked><span>প্রতিটি সিনে ওয়াটারমার্ক দেখাও</span></label>
+      </div>
+    </section>
+
+    <!-- জেনারেট ট্যাব -->
+    <section class="tabpane" data-pane="generate">
+      <div class="group">
+        <h4>অটো-সিগমেন্টেশন</h4>
+        <label class="field"><span>সেনসিটিভিটি</span><input type="range" id="gSensitivity" min="0" max="1" step="0.05" value="0.5"><b id="gSensitivityVal">৫০%</b></label>
+        <label class="field"><span>ন্যূনতম চুপচাপ</span><input type="range" id="gMinSilence" min="0.2" max="1.5" step="0.05" value="0.45"><b id="gMinSilenceVal">0.45s</b></label>
+        <label class="field"><span>সিনের শুরু আগে</span><input type="range" id="gLeadIn" min="0" max="2" step="0.05" value="0.6"><b id="gLeadInVal">0.6s</b></label>
+        <label class="field"><span>সিনের পরে বাড়তি</span><input type="range" id="gLeadOut" min="0" max="4" step="0.1" value="1.6"><b id="gLeadOutVal">1.6s</b></label>
+        <label class="field"><span>সর্বনিম্ন সিন দৈর্ঘ্য</span><input type="range" id="gMinScene" min="0.8" max="4" step="0.1" value="1.6"><b id="gMinSceneVal">1.6s</b></label>
+        <label class="field"><span>সর্বোচ্চ সিন দৈর্ঘ্য</span><input type="range" id="gMaxScene" min="6" max="30" step="1" value="14"><b id="gMaxSceneVal">14s</b></label>
+        <label class="field"><span>কথা বলার হার</span><input type="range" id="gCPS" min="5" max="14" step="0.1" value="8.2"><b id="gCPSVal">8.2</b></label>
+      </div>
+
+      <div class="group">
+        <h4>স্টাইল</h4>
+        <label class="check"><input type="checkbox" id="gAutoFx" checked><span>প্রতিটি সিনে অটো ব্যাকগ্রাউন্ড এফেক্ট</span></label>
+        <label class="field"><span>বৈচিত্র্য (seed)</span><input type="number" id="gSeed" class="input" value="20260916" min="1" max="999999"><button class="btn small ghost" id="btnDice">🎲</button></label>
+      </div>
+
+      <button class="btn big primary" id="btnGenerate">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2z" fill="currentColor"/></svg>
+        টাইমলাইন তৈরি করো
+      </button>
+      <p class="hint center">স্ক্রিপ্ট থাকলে স্ক্রিপ্ট ধরে, না থাকলে শুধু অডিও ধরে সিন বানাবে।</p>
+      <div class="btnrow">
+        <button class="btn small ghost" id="btnRegenVariation">অন্য ভ্যারিয়েশন</button>
+        <button class="btn small ghost" id="btnPreviewSegs">শুধু সিগমেন্ট দেখো</button>
+      </div>
+    </section>
+
+    <!-- সিন ট্যাব -->
+    <section class="tabpane" data-pane="scenes">
+      <div class="btnrow top">
+        <button class="btn small" id="btnAddScene">+ নতুন সিন</button>
+        <button class="btn small ghost" id="btnDupScene">নকল</button>
+        <button class="btn small ghost" id="btnSplitScene">কাটো</button>
+        <button class="btn small danger" id="btnDelScene">মুছো</button>
+      </div>
+      <div class="scene-list" id="sceneList"></div>
+    </section>
+
+    <!-- ছবি ট্যাব -->
+    <section class="tabpane" data-pane="assets">
+      <div class="drop" id="imgDrop">
+        <div class="drop-icon">🖼️</div>
+        <b>ছবি টানো</b>
+        <span>JPG / PNG / WebP · একাধিক নির্বাচন করা যাবে</span>
+        <input type="file" id="imgInput" accept="image/*" multiple hidden />
+      </div>
+      <div class="img-grid" id="imgGrid"></div>
+      <div class="group">
+        <h4>দ্রুত ছবি বসানো</h4>
+        <p class="hint">যে সিনে ছবি বসাতে চাও সেটা টাইমলাইনে সিলেক্ট করো, তারপর নিচের লাইব্রেরি থেকে ছবিতে ক্লিক করো।</p>
+        <label class="check"><input type="checkbox" id="imgAutoApply"><span>“ছবি + টেক্সট” টেমপ্লেটের সিনে অটো বসাও</span></label>
+      </div>
+    </section>
+  </aside>
+
+  <!-- কেন্দ্র -->
+  <main class="center">
+    <div class="stage-viewport" id="stageViewport">
+      <div class="stage-scaler" id="stageScaler">
+        <div class="cx-stage" id="stage"></div>
+      </div>
+
+      <!-- খালি অবস্থা -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-card">
+          <div class="empty-icon">🎬</div>
+          <h2>শুধু অডিও দাও — বাকিটা ইঞ্জিন করবে</h2>
+          <p>১. বাম পাশে তোমার রেকর্ড করা ভয়েসওভার আপলোড করো<br>
+             ২. চাইলে স্ক্রিপ্ট পেস্ট করো (নিখুঁত সিঙ্কের জন্য)<br>
+             ৩. <b>“টাইমলাইন তৈরি করো”</b> চাপো<br>
+             ৪. <b>রেকর্ড মোড</b> চালিয়ে Chrome দিয়ে স্ক্রিন রেকর্ড করো</p>
+          <div class="btnrow center">
+            <button class="btn primary" id="btnEmptyDemo">ডেমো দেখো</button>
+            <button class="btn ghost" id="btnEmptyAudio">অডিও আপলোড</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- প্লেব্যাক কন্ট্রোল -->
+    <div class="transport">
+      <div class="transport-left">
+        <button class="tbtn" id="btnPrevScene" title="আগের সিন">⏮</button>
+        <button class="tbtn big" id="btnPlay" title="প্লে/পজ (Space)">▶</button>
+        <button class="tbtn" id="btnNextScene" title="পরের সিন">⏭</button>
+        <div class="time-readout">
+          <b id="tCur">0:00.00</b>
+          <span>/</span>
+          <i id="tDur">0:00.00</i>
+        </div>
+      </div>
+      <div class="transport-right">
+        <label class="mini"><input type="checkbox" id="loopToggle"> লুপ</label>
+        <select class="mini-select" id="qualitySelect" title="রেন্ডার কোয়ালিটি (এডিটিংয়ে Low রাখলে দ্রুত চলে)">
+          <option value="high">উচ্চ কোয়ালিটি</option>
+          <option value="med" selected>মাঝারি (দ্রুত)</option>
+          <option value="low">নিম্ন (সবচেয়ে দ্রুত)</option>
+        </select>
+        <select class="mini-select" id="speedSelect">
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option>
+        </select>
+        <button class="tbtn" id="btnGuides" title="সেফ-এরিয়া গাইড">▣</button>
+        <button class="tbtn" id="btnFullscreen" title="ফুলস্ক্রিন প্রিভিউ (F)">⛶</button>
+      </div>
+    </div>
+
+    <!-- টাইমলাইন -->
+    <div class="timeline" id="timeline">
+      <div class="tl-toolbar">
+        <b>টাইমলাইন</b>
+        <div class="tl-zoom">
+          <button class="tbtn tiny" id="btnZoomOut">−</button>
+          <input type="range" id="zoomRange" min="20" max="400" value="90">
+          <button class="tbtn tiny" id="btnZoomIn">+</button>
+          <button class="tbtn tiny" id="btnZoomFit">ফিট</button>
+        </div>
+        <div class="tl-stats" id="tlStats">—</div>
+      </div>
+      <div class="tl-scroll" id="tlScroll">
+        <div class="tl-inner" id="tlInner">
+          <div class="tl-ruler" id="tlRuler"></div>
+          <div class="tl-wave" id="tlWave"><canvas id="tlWaveCanvas" height="56"></canvas></div>
+          <div class="tl-scenes" id="tlScenes"></div>
+          <div class="tl-elements" id="tlElements"></div>
+          <div class="tl-playhead" id="tlPlayhead"><i></i></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ডান ইন্সপেক্টর -->
+  <aside class="panel panel-right" id="panelRight">
+    <div class="insp-head">
+      <b id="inspTitle">ইন্সপেক্টর</b>
+      <span id="inspSub">সিন বাছাই করো</span>
+    </div>
+    <div class="insp-body" id="inspBody"></div>
+  </aside>
+</div>
+
+<!-- ============ রেকর্ড ওভারলে ============ -->
+<div class="record-overlay" id="recordOverlay" hidden>
+  <div class="rec-hud" id="recHud">
+    <span class="rec-live"><i></i> RECORDING</span>
+    <span id="recTime">0:00</span>
+    <span class="rec-exit">Esc চাপলে বের হবে</span>
+  </div>
+  <div class="rec-stage-wrap" id="recStageWrap"></div>
+  <div class="rec-blocker" id="recBlocker"></div>
+</div>
+
+<!-- ============ হেল্প মডাল ============ -->
+<div class="modal" id="helpModal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <b>🎬 Cinematic Engine — পুরো কাজের ধাপ</b>
+      <button class="modal-x" id="helpClose">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="flow">
+        <div class="flow-step"><span>১</span><div><b>অডিও দাও</b><i>বাম পাশের “অডিও” ট্যাবে তোমার রেকর্ড করা ভয়েসওভার টেনে আনো। ব্রাউজারেই বিশ্লেষণ হয় — কোথাও আপলোড হয় না।</i></div></div>
+        <div class="flow-step"><span>২</span><div><b>স্ক্রিপ্ট পেস্ট করো (ঐচ্ছিক কিন্তু খুব কাজের)</b><i>“স্ক্রিপ্ট” ট্যাবে তুমি যা বলেছ ঠিক সেই লেখা বসাও। প্রতি বাক্য আলাদা লাইনে। এটা দিলে প্রতিটি লাইন অডিওর সঠিক সময়ে বসে যায়।</i></div></div>
+        <div class="flow-step"><span>৩</span><div><b>টাইমলাইন তৈরি করো</b><i>“জেনারেট” ট্যাবে গিয়ে বড় বাটন চাপো। ইঞ্জিন নিজে থেকে সিন ভাগ করবে, টেক্সট/অ্যানিমেশন/ব্যাকগ্রাউন্ড এফেক্ট বসাবে।</i></div></div>
+        <div class="flow-step"><span>৪</span><div><b>পালিশ করো</b><i>টাইমলাইনে সিন ড্র্যাগ করে সময় বদলাও, ডান পাশের ইন্সপেক্টরে টেক্সট/রঙ/অ্যানিমেশন বদলাও, “ছবি” ট্যাব থেকে ছবি বসাও।</i></div></div>
+        <div class="flow-step"><span>৫</span><div><b>রেকর্ড মোড</b><i>স্ক্রিন রেকর্ডার অন করো → <b>রেকর্ড মোড</b> চাপো → ৩ সেকেন্ড কাউন্টডাউন → পুরো স্ক্রিনে ভিডিও প্লে হবে, কার্সর লুকানো, সব ইনপুট লক। শেষে <kbd>Esc</kbd>।</i></div></div>
+      </div>
+
+      <div class="kb-grid">
+        <div><h6>প্লেব্যাক</h6>
+          <div class="kb"><kbd>Space</kbd><span>প্লে / পজ</span></div>
+          <div class="kb"><kbd>←</kbd><kbd>→</kbd><span>০.১ সেকেন্ড পেছনে/সামনে</span></div>
+          <div class="kb"><kbd>Shift</kbd>+<kbd>←→</kbd><span>১ সেকেন্ড</span></div>
+          <div class="kb"><kbd>J</kbd><kbd>L</kbd><span>আগের / পরের সিন</span></div>
+          <div class="kb"><kbd>Home</kbd><kbd>End</kbd><span>একদম শুরু / শেষ</span></div>
+        </div>
+        <div><h6>এডিটিং</h6>
+          <div class="kb"><kbd>Ctrl</kbd>+<kbd>Z</kbd><span>পূর্বাবস্থা</span></div>
+          <div class="kb"><kbd>Ctrl</kbd>+<kbd>Y</kbd><span>পুনরায়</span></div>
+          <div class="kb"><kbd>Ctrl</kbd>+<kbd>G</kbd><span>টাইমলাইন জেনারেট</span></div>
+          <div class="kb"><kbd>Ctrl</kbd>+<kbd>D</kbd><span>সিন নকল</span></div>
+          <div class="kb"><kbd>Delete</kbd><span>বাছাই করা এলিমেন্ট মুছো</span></div>
+          <div class="kb"><kbd>Ctrl</kbd>+<kbd>S</kbd><span>প্রজেক্ট JSON ডাউনলোড</span></div>
+        </div>
+        <div><h6>ভিউ</h6>
+          <div class="kb"><kbd>F</kbd><span>ফুলস্ক্রিন প্রিভিউ</span></div>
+          <div class="kb"><kbd>G</kbd><span>সেফ-এরিয়া গাইড</span></div>
+          <div class="kb"><kbd>F11</kbd><span>রেকর্ড মোড</span></div>
+          <div class="kb"><kbd>Esc</kbd><span>রেকর্ড মোড থেকে বের হও</span></div>
+          <div class="kb"><kbd>?</kbd><span>এই হেল্প</span></div>
+        </div>
+      </div>
+
+      <div class="modal-note">
+        <b>প্রফেশনাল ফল চাইলে:</b> ① স্ক্রিপ্ট অবশ্যই দিও (সিঙ্ক নিখুঁত হয়) ② রেকর্ডের আগে ডান দিকের কোয়ালিটি <b>“উচ্চ”</b> করো ③ রেকর্ডার 1920×1080 / 60fps-এ রাখো ④ প্রতিটি সিনের টেক্সট একবার চোখ বুলিয়ে নাও — অটো-জেনারেটেড লাইন কখনো ছোট/বড় হতে পারে ⑤ থিম উপরের গোল গোল ঘর থেকে বদলাতে পারবে।
+      </div>
+      <div class="modal-actions">
+        <span style="font-size:12px;color:var(--ui-dim)">সব ডেটা এই ব্রাউজারেই থাকে · অটো-সেভ হয়</span>
+        <button class="btn primary" id="helpOk">বুঝেছি, শুরু করি</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ রেকর্ড নির্দেশনা মডাল ============ -->
+<div class="modal" id="recModal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <b><span class="rec-dot"></span> রেকর্ড মোড — কীভাবে নেবে</b>
+      <button class="modal-x" id="recModalClose">×</button>
+    </div>
+    <div class="modal-body">
+      <ol class="steps">
+        <li>
+          <b>একটা স্ক্রিন রেকর্ডার রেডি রাখো</b>
+          <span>যেকোনো একটা বেছে নাও — তিনটেই ফুল-এইচডি দেয়:</span>
+          <div class="best">
+            <div class="opt"><span>১</span><div><b>Windows:</b> <kbd>Win</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd> — Xbox Game Bar, সরাসরি MP4 সেভ হয়<br><b>Mac:</b> <kbd>⇧</kbd>+<kbd>⌘</kbd>+<kbd>5</kbd> → “Record Entire Screen”</div></div>
+            <div class="opt"><span>২</span><div><b>OBS Studio</b> (ফ্রি) → Display Capture → Start Recording<br><i>সবচেয়ে প্রফেশনাল: 1080p60 + বিটরেট কন্ট্রোল</i></div></div>
+            <div class="opt"><span>৩</span><div><b>Screenity / Loom</b> — Chrome এক্সটেনশন, ব্রাউজার থেকেই</div></div>
+          </div>
+        </li>
+        <li>
+          <b>রেকর্ডিং শুরু করো</b> — রেকর্ডার অন করো (এখনো এই ট্যাবে ফিরে এসো না)
+        </li>
+        <li>
+          <b>তারপর নিচের বাটন চাপো</b>
+          <span>৩ সেকেন্ড কাউন্টডাউন হবে, তারপর ভিডিও নিজে নিজে পুরো স্ক্রিনে প্লে হবে। মাউস কার্সর লুকানো থাকবে এবং সব ক্লিক/কীবোর্ড লক হয়ে যাবে — ফ্রেমে শুধু ভিডিওটাই দেখা যাবে।</span>
+        </li>
+        <li>
+          <b>শেষ হলে <kbd>Esc</kbd> চাপো</b> — রেকর্ড মোড বন্ধ হয়ে এডিটরে ফিরে আসবে।
+        </li>
+      </ol>
+      <div class="modal-note">
+        <b>টিপস:</b> রেকর্ড শুরুর আগে ডান দিকে <b>“উচ্চ কোয়ালিটি”</b> সিলেক্ট করো এবং বাকি সব ট্যাব বন্ধ রাখো। স্ক্রিন রেকর্ডারের আকার <b>1920×1080</b> রাখলে ফুল-এইচডি ভিডিও পাবে।
+      </div>
+      <div class="modal-actions">
+        <label class="check"><input type="checkbox" id="recDontShow"><span>আর দেখিও না</span></label>
+        <div class="btnrow">
+          <button class="btn ghost" id="recCancel">বাতিল</button>
+          <button class="btn primary" id="recStart">
+            <span class="rec-dot"></span> ৩ সেকেন্ড পরে শুরু করো
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-host" id="toastHost"></div>
+<input type="file" id="jsonInput" accept="application/json,.json" hidden />
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
